@@ -1,0 +1,19 @@
+# Configurazione principale di GravityStaffMode.
+
+# Se attivo, i messaggi di entrata e uscita dei giocatori in vanish non vengono mostrati.
+nascondi-messaggi-accesso-uscita: true
+
+# Prefissi visualizzati nella tab. Puoi usare colori (&) e il segnaposto {prefisso}.
+# {prefisso} mantiene il nome/prefisso tab impostato da altri plugin, ad esempio quello dei rank.
+tab:
+  prefisso-staffmode: '&b[S] &r{prefisso}'
+  prefisso-vanish: '&7[V] &r{prefisso}'
+
+# UUID dei giocatori che devono restare in vanish dopo riavvii o ricaricamenti.
+# Questa sezione viene gestita automaticamente dal plugin.
+giocatori-in-vanish: []
+
+# Giocatori che hanno effettuato l'accesso in staff mode.
+# Queste sezioni vengono gestite automaticamente dal plugin.
+giocatori-in-staffmode: []
+giocatori-in-vanish-prima-della-staffmode: []

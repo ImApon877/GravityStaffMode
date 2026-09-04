@@ -1,0 +1,57 @@
+name: GravityStaffMode
+version: 1.0.0
+main: it.gravitymc.gravitystaffmode.GravityStaffModePlugin
+author: GravityMC
+description: Staff mode configurabile in italiano, compatibile con Minecraft 1.8 fino alla 1.21.11.
+commands:
+  vanish:
+    description: Toggles your vanish status.
+    usage: /vanish
+    aliases: [v]
+    permission: gravityvanish.use
+  staffmode:
+    description: Attiva o disattiva la modalita staff.
+    usage: /staffmode
+    aliases: [sm]
+    permission: gravityvanish.staffmode
+  invsee:
+    description: Apre l'inventario di un giocatore.
+    usage: /invsee <giocatore>
+    aliases: [inv]
+    permission: gravityvanish.invsee
+  randomtp:
+    description: Ti teletrasporta da un giocatore casuale.
+    usage: /randomtp
+    aliases: [rtp]
+    permission: gravityvanish.randomtp
+  fly:
+    description: Attiva o disattiva il volo in staff mode.
+    usage: /fly
+    permission: gravityvanish.fly
+  gravitystaffmode:
+    description: Gestisce la configurazione di GravityStaffMode.
+    usage: /gravitystaffmode reload
+    aliases: [gsm]
+    permission: gravitystaffmode.reload
+permissions:
+  gravityvanish.use:
+    description: Allows toggling vanish.
+    default: op
+  gravityvanish.see:
+    description: Allows seeing vanished players.
+    default: op
+  gravityvanish.staffmode:
+    description: Permette di usare e vedere la modalita staff.
+    default: op
+  gravityvanish.invsee:
+    description: Permette di aprire gli inventari altrui.
+    default: op
+  gravityvanish.randomtp:
+    description: Permette il teletrasporto casuale tra giocatori.
+    default: op
+  gravityvanish.fly:
+    description: Permette di usare il volo durante la staff mode.
+    default: op
+  gravitystaffmode.reload:
+    description: Permette di ricaricare GravityStaffMode senza riavviare il server.
+    default: op
