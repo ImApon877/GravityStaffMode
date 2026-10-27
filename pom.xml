@@ -6,7 +6,7 @@
 
     <groupId>it.gravitymc</groupId>
     <artifactId>GravityStaffMode</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <properties>
         <maven.compiler.release>8</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
