@@ -94,11 +94,7 @@ public final class VanishManager {
         String originalName = originalTabNames.get(uuid);
         String configurationPath = states.isInStaffMode(player) ? STAFF_MODE_TAB_PATH : VANISH_TAB_PATH;
         String prefix = plugin.getConfig().getString(configurationPath, "{prefisso}");
-        String name = Messages.color(prefix.replace("{prefisso}", originalName));
-        if (name.length() > 16) {
-            name = name.substring(0, 16);
-        }
-        player.setPlayerListName(name);
+        player.setPlayerListName(Messages.color(prefix.replace("{prefisso}", originalName)));
     }
 
     // Other plugins (ranks, TAB) may overwrite the tab name right after: set it again on the next tick.

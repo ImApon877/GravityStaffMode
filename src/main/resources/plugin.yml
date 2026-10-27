@@ -1,6 +1,7 @@
 name: GravityStaffMode
 version: 1.0.0
 main: it.gravitymc.gravitystaffmode.GravityStaffModePlugin
+api-version: '1.13'
 author: GravityMC
 description: Staff mode configurabile in italiano, compatibile con Minecraft 1.8 fino alla 1.21.11.
 commands:
