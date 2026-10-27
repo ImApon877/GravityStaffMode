@@ -26,19 +26,21 @@ Compatibile con server Minecraft dalla 1.8 alla 1.21.11.
 
 | Comando | Descrizione | Permesso |
 | --- | --- | --- |
-| `/vanish` | Attiva o disattiva il vanish. | `gravityvanish.use` |
-| `/staffmode` | Attiva o disattiva la staff mode. | `gravityvanish.staffmode` |
-| `/invsee <giocatore>` | Apre l'inventario di un giocatore. | `gravityvanish.invsee` |
-| `/randomtp` | Si teletrasporta da un giocatore casuale. | `gravityvanish.randomtp` |
-| `/fly` | Attiva o disattiva il volo in staff mode. | `gravityvanish.fly` |
+| `/vanish` | Attiva o disattiva il vanish. | `gravitystaffmode.vanish` |
+| `/staffmode` | Attiva o disattiva la staff mode. | `gravitystaffmode.staffmode` |
+| `/invsee <giocatore>` | Apre l'inventario di un giocatore. | `gravitystaffmode.invsee` |
+| `/randomtp` | Si teletrasporta da un giocatore casuale. | `gravitystaffmode.randomtp` |
+| `/fly` | Attiva o disattiva il volo in staff mode. | `gravitystaffmode.fly` |
 | `/gravitystaffmode reload` | Ricarica configurazione e messaggi. | `gravitystaffmode.reload` |
 
 | Permesso | Descrizione |
 | --- | --- |
-| `gravityvanish.see` | Consente di vedere i giocatori in vanish. |
-| `gravityvanish.staffmode` | Consente anche di vedere i giocatori in staff mode. |
+| `gravitystaffmode.see` | Consente di vedere i giocatori in vanish. |
+| `gravitystaffmode.staffmode` | Consente anche di vedere i giocatori in staff mode. |
 
-Tutti i permessi sono assegnati agli operatori del server per impostazione predefinita.
+Tutti i permessi sono assegnati agli operatori del server per impostazione predefinita. `gravitystaffmode.*` li concede tutti.
+
+I vecchi nomi `gravityvanish.*` (es. `gravityvanish.use`) restano validi: ogni nuovo permesso concede anche il vecchio, quindi i gruppi gia configurati continuano a funzionare.
 
 ## Strumenti staff mode
 

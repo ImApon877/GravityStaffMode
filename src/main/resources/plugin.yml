@@ -35,38 +35,76 @@ commands:
     aliases: [gsm]
     permission: gravitystaffmode.reload
 permissions:
+  # Nomi consigliati: gravitystaffmode.<nome>. Ognuno concede il vecchio permesso gravityvanish.*
+  # corrispondente, che resta valido, quindi i server gia configurati non devono cambiare niente.
   gravitystaffmode.*:
     description: Tutti i permessi di GravityStaffMode.
     default: op
     children:
-      gravityvanish.use: true
-      gravityvanish.see: true
-      gravityvanish.staffmode: true
-      gravityvanish.invsee: true
-      gravityvanish.randomtp: true
-      gravityvanish.fly: true
+      gravitystaffmode.vanish: true
+      gravitystaffmode.see: true
+      gravitystaffmode.staffmode: true
+      gravitystaffmode.invsee: true
+      gravitystaffmode.randomtp: true
+      gravitystaffmode.fly: true
+      gravitystaffmode.freeze.bypass: true
       gravitystaffmode.reload: true
-  gravityvanish.use:
-    description: Allows toggling vanish.
+  gravitystaffmode.vanish:
+    description: Permette di attivare il vanish.
     default: op
-  gravityvanish.see:
-    description: Allows seeing vanished players.
+    children:
+      gravityvanish.use: true
+  gravitystaffmode.see:
+    description: Permette di vedere i giocatori in vanish.
     default: op
-  gravityvanish.staffmode:
-    description: Permette di usare e vedere la modalita staff.
+    children:
+      gravityvanish.see: true
+  gravitystaffmode.staffmode:
+    description: Permette di usare e vedere la staff mode.
     default: op
-  gravityvanish.invsee:
+    children:
+      gravityvanish.staffmode: true
+  gravitystaffmode.invsee:
     description: Permette di aprire gli inventari altrui.
     default: op
-  gravityvanish.randomtp:
+    children:
+      gravityvanish.invsee: true
+  gravitystaffmode.randomtp:
     description: Permette il teletrasporto casuale tra giocatori.
     default: op
-  gravityvanish.fly:
-    description: Permette di usare il volo durante la staff mode.
+    children:
+      gravityvanish.randomtp: true
+  gravitystaffmode.fly:
+    description: Permette di usare il volo.
     default: op
-  gravityvanish.freeze.bypass:
+    children:
+      gravityvanish.fly: true
+  gravitystaffmode.freeze.bypass:
     description: Impedisce di essere freezati dallo staff.
     default: op
+    children:
+      gravityvanish.freeze.bypass: true
   gravitystaffmode.reload:
     description: Permette di ricaricare GravityStaffMode senza riavviare il server.
+    default: op
+  gravityvanish.use:
+    description: Permette di attivare il vanish. Vecchio nome di gravitystaffmode.vanish.
+    default: op
+  gravityvanish.see:
+    description: Permette di vedere i giocatori in vanish. Vecchio nome di gravitystaffmode.see.
+    default: op
+  gravityvanish.staffmode:
+    description: Permette di usare e vedere la staff mode. Vecchio nome di gravitystaffmode.staffmode.
+    default: op
+  gravityvanish.invsee:
+    description: Permette di aprire gli inventari altrui. Vecchio nome di gravitystaffmode.invsee.
+    default: op
+  gravityvanish.randomtp:
+    description: Permette il teletrasporto casuale tra giocatori. Vecchio nome di gravitystaffmode.randomtp.
+    default: op
+  gravityvanish.fly:
+    description: Permette di usare il volo. Vecchio nome di gravitystaffmode.fly.
+    default: op
+  gravityvanish.freeze.bypass:
+    description: Impedisce di essere freezati dallo staff. Vecchio nome di gravitystaffmode.freeze.bypass.
     default: op
