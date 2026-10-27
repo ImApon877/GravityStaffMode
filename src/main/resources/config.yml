@@ -9,14 +9,7 @@ tab:
   prefisso-staffmode: '&b[S] &r{prefisso}'
   prefisso-vanish: '&7[V] &r{prefisso}'
 
-# UUID dei giocatori che devono restare in vanish dopo riavvii o ricaricamenti.
-# Questa sezione viene gestita automaticamente dal plugin.
-giocatori-in-vanish: []
-
-# Giocatori che hanno effettuato l'accesso in staff mode.
-# Queste sezioni vengono gestite automaticamente dal plugin.
-giocatori-in-staffmode: []
-giocatori-in-vanish-prima-della-staffmode: []
+# Gli stati dei giocatori (vanish e staff mode) sono salvati in dati.yml.
 
 # Gamemode usata in staff mode (SURVIVAL, ADVENTURE, CREATIVE, SPECTATOR).
 # CREATIVE e sconsigliata: con l'invsee permette di creare o duplicare oggetti.

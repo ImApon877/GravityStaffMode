@@ -34,6 +34,17 @@ commands:
     aliases: [gsm]
     permission: gravitystaffmode.reload
 permissions:
+  gravitystaffmode.*:
+    description: Tutti i permessi di GravityStaffMode.
+    default: op
+    children:
+      gravityvanish.use: true
+      gravityvanish.see: true
+      gravityvanish.staffmode: true
+      gravityvanish.invsee: true
+      gravityvanish.randomtp: true
+      gravityvanish.fly: true
+      gravitystaffmode.reload: true
   gravityvanish.use:
     description: Allows toggling vanish.
     default: op

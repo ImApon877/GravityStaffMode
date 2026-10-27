@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,8 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     private static final String FLY_PERMISSION = "gravityvanish.fly";
     private static final String RELOAD_PERMISSION = "gravitystaffmode.reload";
     private static final String FREEZE_BYPASS_PERMISSION = "gravityvanish.freeze.bypass";
+    private static final String[] PLAYER_STATE_PATHS = {
+            "giocatori-in-vanish", "giocatori-in-staffmode", "giocatori-in-vanish-prima-della-staffmode"};
     private final Set<UUID> vanishedPlayers = new HashSet<UUID>();
     private final Set<UUID> staffModePlayers = new HashSet<UUID>();
     private final Set<UUID> vanishedBeforeStaffMode = new HashSet<UUID>();
@@ -74,6 +77,8 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     private final Set<UUID> queuedTabUpdates = new HashSet<UUID>();
     private final Random random = new Random();
     private FileConfiguration messages;
+    private File playerDataFile;
+    private YamlConfiguration playerData;
     private File staffInventoriesFile;
     private YamlConfiguration savedStaffInventories;
     private boolean tabUpdateQueued;
@@ -128,6 +133,20 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             return handleReload(sender, args);
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        String commandName = command.getName().toLowerCase(Locale.ROOT);
+        if (commandName.equals("invsee")) {
+            // null = default completion with the names of the players the sender can see.
+            return null;
+        }
+        if (commandName.equals("gravitystaffmode") && args.length == 1 && sender.hasPermission(RELOAD_PERMISSION)
+                && "reload".startsWith(args[0].toLowerCase(Locale.ROOT))) {
+            return Collections.singletonList("reload");
+        }
+        return Collections.emptyList();
     }
 
     @EventHandler
@@ -400,7 +419,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             return true;
         }
         if (args.length != 0) {
-            sendMessage(player, "uso");
+            sendMessage(player, "uso-staffmode");
             return true;
         }
         UUID uuid = player.getUniqueId();
@@ -457,7 +476,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             return true;
         }
         if (args.length != 0) {
-            sendMessage(player, "uso");
+            sendMessage(player, "uso-randomtp");
             return true;
         }
         randomTeleport(player);
@@ -470,7 +489,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             return true;
         }
         if (args.length != 0) {
-            sendMessage(player, "uso");
+            sendMessage(player, "uso-fly");
             return true;
         }
         toggleFlight(player);
@@ -957,13 +976,35 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     }
 
     private void loadPlayerStates() {
+        playerDataFile = new File(getDataFolder(), "dati.yml");
+        playerData = YamlConfiguration.loadConfiguration(playerDataFile);
+        migratePlayerStatesFromConfig();
         loadUuidSet("giocatori-in-vanish", vanishedPlayers);
         loadUuidSet("giocatori-in-staffmode", staffModePlayers);
         loadUuidSet("giocatori-in-vanish-prima-della-staffmode", vanishedBeforeStaffMode);
     }
 
+    // Older versions kept player states in config.yml: move them to dati.yml once.
+    private void migratePlayerStatesFromConfig() {
+        boolean migrated = false;
+        for (String path : PLAYER_STATE_PATHS) {
+            if (!getConfig().contains(path)) {
+                continue;
+            }
+            if (!playerData.contains(path)) {
+                playerData.set(path, getConfig().getStringList(path));
+            }
+            getConfig().set(path, null);
+            migrated = true;
+        }
+        if (migrated) {
+            saveConfig();
+            savePlayerDataFile();
+        }
+    }
+
     private void loadUuidSet(String path, Set<UUID> destination) {
-        for (String value : getConfig().getStringList(path)) {
+        for (String value : playerData.getStringList(path)) {
             try {
                 destination.add(UUID.fromString(value));
             } catch (IllegalArgumentException exception) {
@@ -990,7 +1031,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         saveUuidSet("giocatori-in-vanish", vanishedPlayers);
         saveUuidSet("giocatori-in-staffmode", staffModePlayers);
         saveUuidSet("giocatori-in-vanish-prima-della-staffmode", vanishedBeforeStaffMode);
-        saveConfig();
+        savePlayerDataFile();
     }
 
     private void saveUuidSet(String path, Set<UUID> values) {
@@ -998,7 +1039,15 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         for (UUID uuid : values) {
             serializedValues.add(uuid.toString());
         }
-        getConfig().set(path, serializedValues);
+        playerData.set(path, serializedValues);
+    }
+
+    private void savePlayerDataFile() {
+        try {
+            playerData.save(playerDataFile);
+        } catch (IOException exception) {
+            getLogger().severe("Impossibile salvare dati.yml: " + exception.getMessage());
+        }
     }
 
     private void sendMessage(CommandSender sender, String key) {
