@@ -9,11 +9,14 @@ tab:
   prefisso-staffmode: '&b[S] &r{prefisso}'
   prefisso-vanish: '&7[V] &r{prefisso}'
 
-# UUID dei giocatori che devono restare in vanish dopo riavvii o ricaricamenti.
-# Questa sezione viene gestita automaticamente dal plugin.
-giocatori-in-vanish: []
+# Gli stati dei giocatori (vanish e staff mode) sono salvati in dati.yml.
 
-# Giocatori che hanno effettuato l'accesso in staff mode.
-# Queste sezioni vengono gestite automaticamente dal plugin.
-giocatori-in-staffmode: []
-giocatori-in-vanish-prima-della-staffmode: []
+# Gamemode usata in staff mode (SURVIVAL, ADVENTURE, CREATIVE, SPECTATOR).
+# CREATIVE e sconsigliata: con l'invsee permette di creare o duplicare oggetti.
+gamemode-staffmode: SURVIVAL
+
+freeze:
+  # Comando eseguito dalla console se un giocatore freezato esce dal server.
+  # Usa {giocatore} per il nome. Lascia vuoto per non eseguire nulla.
+  # Esempio: 'ban {giocatore} Uscito durante il freeze'
+  comando-uscita: ''
