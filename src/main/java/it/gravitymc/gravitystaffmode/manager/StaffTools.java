@@ -1,5 +1,6 @@
 package it.gravitymc.gravitystaffmode.manager;
 
+import it.gravitymc.gravitystaffmode.Compat;
 import it.gravitymc.gravitystaffmode.Messages;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -9,20 +10,29 @@ import org.bukkit.inventory.meta.ItemMeta;
 /** The items of the staff hotbar, recognised by material and configured name. */
 public final class StaffTools {
     public enum Tool {
-        VANISH(Material.INK_SACK, "strumento-vanish", 0),
-        RANDOM_TP(Material.COMPASS, "strumento-randomtp", 1),
-        FLIGHT(Material.FEATHER, "piuma-volo", 2),
-        FREEZE(Material.BLAZE_ROD, "strumento-freeze", 7),
-        INVSEE(Material.BOOK, "strumento-invsee", 8);
+        VANISH("strumento-vanish", 0, "INK_SAC", "INK_SACK"),
+        RANDOM_TP("strumento-randomtp", 1, "COMPASS"),
+        FLIGHT("piuma-volo", 2, "FEATHER"),
+        FREEZE("strumento-freeze", 7, "BLAZE_ROD"),
+        INVSEE("strumento-invsee", 8, "BOOK");
 
-        private final Material material;
         private final String messageKey;
         private final int slot;
+        private final String[] materialNames;
+        private Material material;
 
-        Tool(Material material, String messageKey, int slot) {
-            this.material = material;
+        Tool(String messageKey, int slot, String... materialNames) {
             this.messageKey = messageKey;
             this.slot = slot;
+            this.materialNames = materialNames;
+        }
+
+        // Resolved by name: INK_SACK only exists up to 1.12, INK_SAC from 1.13.
+        private Material material() {
+            if (material == null) {
+                material = Compat.material(materialNames);
+            }
+            return material;
         }
     }
 
@@ -43,7 +53,7 @@ public final class StaffTools {
     }
 
     public boolean isTool(ItemStack item, Tool tool) {
-        if (item == null || item.getType() != tool.material || !item.hasItemMeta()) {
+        if (item == null || item.getType() != tool.material() || !item.hasItemMeta()) {
             return false;
         }
         ItemMeta meta = item.getItemMeta();
@@ -60,7 +70,7 @@ public final class StaffTools {
     }
 
     private ItemStack create(Tool tool) {
-        ItemStack item = new ItemStack(tool.material, 1);
+        ItemStack item = new ItemStack(tool.material(), 1);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(name(tool));
         item.setItemMeta(meta);

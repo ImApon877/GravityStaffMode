@@ -17,9 +17,14 @@ import it.gravitymc.gravitystaffmode.manager.InvseeManager;
 import it.gravitymc.gravitystaffmode.manager.StaffModeManager;
 import it.gravitymc.gravitystaffmode.manager.StaffTools;
 import it.gravitymc.gravitystaffmode.manager.VanishManager;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,6 +34,7 @@ public final class GravityStaffModePlugin extends JavaPlugin {
     private PlayerStates states;
     private VanishManager vanish;
     private StaffModeManager staffMode;
+    private YamlConfiguration config;
 
     @Override
     public void onEnable() {
@@ -59,7 +65,7 @@ public final class GravityStaffModePlugin extends JavaPlugin {
         PluginManager pluginManager = getServer().getPluginManager();
         pluginManager.registerEvents(new ConnectionListener(this, states, staffMode, vanish, invsee, freeze), this);
         pluginManager.registerEvents(new StaffModeListener(messages, states, staffMode, tools, invsee, freeze), this);
-        pluginManager.registerEvents(new InventoryListener(states, invsee, tools), this);
+        pluginManager.registerEvents(new InventoryListener(this, states, invsee, tools), this);
         pluginManager.registerEvents(new FreezeListener(freeze), this);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -92,6 +98,39 @@ public final class GravityStaffModePlugin extends JavaPlugin {
                 staffMode.refreshTools(player);
             }
             staffMode.updatePlayerState(player);
+        }
+    }
+
+    // config.yml is read and written as UTF-8 on every version (see Utf8Yaml).
+    @Override
+    public FileConfiguration getConfig() {
+        if (config == null) {
+            reloadConfig();
+        }
+        return config;
+    }
+
+    @Override
+    public void reloadConfig() {
+        config = Utf8Yaml.load(new File(getDataFolder(), "config.yml"));
+        InputStream defaults = getResource("config.yml");
+        if (defaults == null) {
+            return;
+        }
+        try {
+            config.setDefaults(Utf8Yaml.load(defaults));
+            defaults.close();
+        } catch (IOException exception) {
+            getLogger().warning("Impossibile leggere il config.yml predefinito: " + exception.getMessage());
+        }
+    }
+
+    @Override
+    public void saveConfig() {
+        try {
+            Utf8Yaml.save((YamlConfiguration) getConfig(), new File(getDataFolder(), "config.yml"));
+        } catch (IOException exception) {
+            getLogger().severe("Impossibile salvare config.yml: " + exception.getMessage());
         }
     }
 

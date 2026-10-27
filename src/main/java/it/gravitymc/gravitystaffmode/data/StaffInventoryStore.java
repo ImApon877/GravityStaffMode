@@ -1,5 +1,6 @@
 package it.gravitymc.gravitystaffmode.data;
 
+import it.gravitymc.gravitystaffmode.Utf8Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public final class StaffInventoryStore {
     }
 
     public void load() {
-        saved = YamlConfiguration.loadConfiguration(file);
+        saved = Utf8Yaml.load(file);
         for (String key : saved.getKeys(false)) {
             UUID uuid;
             try {
@@ -162,7 +163,7 @@ public final class StaffInventoryStore {
 
     private void saveFile() {
         try {
-            saved.save(file);
+            Utf8Yaml.save(saved, file);
         } catch (IOException exception) {
             plugin.getLogger().severe("Impossibile salvare inventari-staffmode.yml: " + exception.getMessage());
         }

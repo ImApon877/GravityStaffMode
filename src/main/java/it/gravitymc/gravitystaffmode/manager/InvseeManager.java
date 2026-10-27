@@ -1,5 +1,6 @@
 package it.gravitymc.gravitystaffmode.manager;
 
+import it.gravitymc.gravitystaffmode.Compat;
 import it.gravitymc.gravitystaffmode.Messages;
 import it.gravitymc.gravitystaffmode.data.PlayerStates;
 import java.util.HashMap;
@@ -9,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -35,7 +35,7 @@ public final class InvseeManager {
             if (slot >= menu.getSize()) {
                 break;
             }
-            ItemStack playerHead = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+            ItemStack playerHead = Compat.playerHead();
             SkullMeta meta = (SkullMeta) playerHead.getItemMeta();
             meta.setOwner(target.getName());
             meta.setDisplayName(ChatColor.WHITE + target.getName());
@@ -48,7 +48,7 @@ public final class InvseeManager {
 
     /** Opens the inventory of the player whose head was clicked in the menu. */
     public void openSelected(Player viewer, ItemStack selectedItem) {
-        if (selectedItem == null || selectedItem.getType() != Material.SKULL_ITEM || !selectedItem.hasItemMeta()) {
+        if (selectedItem == null || selectedItem.getType() != Compat.playerHeadMaterial() || !selectedItem.hasItemMeta()) {
             return;
         }
         ItemMeta meta = selectedItem.getItemMeta();

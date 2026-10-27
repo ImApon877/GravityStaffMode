@@ -1,5 +1,6 @@
 package it.gravitymc.gravitystaffmode.data;
 
+import it.gravitymc.gravitystaffmode.Utf8Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public final class PlayerStates {
     }
 
     public void load() {
-        data = YamlConfiguration.loadConfiguration(file);
+        data = Utf8Yaml.load(file);
         migrateFromConfig();
         loadUuidSet(VANISHED_PATH, vanished);
         loadUuidSet(STAFF_MODE_PATH, staffMode);
@@ -135,7 +136,7 @@ public final class PlayerStates {
 
     private void saveFile() {
         try {
-            data.save(file);
+            Utf8Yaml.save(data, file);
         } catch (IOException exception) {
             plugin.getLogger().severe("Impossibile salvare dati.yml: " + exception.getMessage());
         }

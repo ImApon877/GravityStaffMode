@@ -38,6 +38,16 @@ public final class ConnectionListener implements Listener {
             event.setJoinMessage(null);
         }
         vanish.hideVanishedFrom(joining);
+        // Hub plugins (e.g. TitanHub) clear the inventory on join after this listener ran:
+        // hand the staff tools out again once they are done.
+        plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+            @Override
+            public void run() {
+                if (joining.isOnline() && states.isInStaffMode(joining)) {
+                    staffMode.refreshTools(joining);
+                }
+            }
+        }, 2L);
     }
 
     @EventHandler
@@ -47,6 +57,7 @@ public final class ConnectionListener implements Listener {
             event.setQuitMessage(null);
         }
         staffMode.disable(player);
+        staffMode.forget(player.getUniqueId());
         vanish.forget(player.getUniqueId());
         invsee.forget(player.getUniqueId());
         freeze.handleQuit(player);

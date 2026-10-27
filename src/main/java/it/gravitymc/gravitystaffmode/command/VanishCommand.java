@@ -23,7 +23,7 @@ public final class VanishCommand extends PlayerCommand {
             return;
         }
         if (states.isInStaffMode(player)) {
-            messages.send(player, "staffmode-attivata");
+            messages.send(player, "vanish-staff-attiva");
             return;
         }
         if (states.removeVanished(player.getUniqueId())) {

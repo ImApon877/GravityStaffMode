@@ -3,8 +3,6 @@ package it.gravitymc.gravitystaffmode;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -24,17 +22,19 @@ public final class Messages {
         if (!messagesFile.exists()) {
             plugin.saveResource("messages.yml", false);
         }
-        messages = YamlConfiguration.loadConfiguration(messagesFile);
+        YamlConfiguration loaded = Utf8Yaml.load(messagesFile);
+        if (Utf8Yaml.repairMojibake(loaded)) {
+            plugin.getLogger().info("Caratteri speciali di messages.yml riparati.");
+        }
+        messages = loaded;
         InputStream defaultsStream = plugin.getResource("messages.yml");
         if (defaultsStream == null) {
             return;
         }
         try {
-            YamlConfiguration defaults = YamlConfiguration.loadConfiguration(
-                    new InputStreamReader(defaultsStream, StandardCharsets.UTF_8));
-            messages.setDefaults(defaults);
+            messages.setDefaults(Utf8Yaml.load(defaultsStream));
             messages.options().copyDefaults(true);
-            messages.save(messagesFile);
+            Utf8Yaml.save(loaded, messagesFile);
         } catch (IOException exception) {
             plugin.getLogger().warning("Impossibile aggiornare messages.yml: " + exception.getMessage());
         } finally {

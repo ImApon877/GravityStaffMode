@@ -1,5 +1,6 @@
 package it.gravitymc.gravitystaffmode.listener;
 
+import it.gravitymc.gravitystaffmode.Compat;
 import it.gravitymc.gravitystaffmode.Messages;
 import it.gravitymc.gravitystaffmode.data.PlayerStates;
 import it.gravitymc.gravitystaffmode.manager.FreezeManager;
@@ -68,6 +69,10 @@ public final class StaffModeListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onStaffToolEntityUse(PlayerInteractEntityEvent event) {
         Player staff = event.getPlayer();
+        // From 1.9 the event fires once per hand: without this the freeze would toggle twice.
+        if (Compat.isOffHand(event)) {
+            return;
+        }
         if (!states.isInStaffMode(staff) || !(event.getRightClicked() instanceof Player)) {
             return;
         }

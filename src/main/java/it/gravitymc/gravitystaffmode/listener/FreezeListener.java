@@ -1,6 +1,7 @@
 package it.gravitymc.gravitystaffmode.listener;
 
 import it.gravitymc.gravitystaffmode.manager.FreezeManager;
+import org.bukkit.Location;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -19,11 +20,14 @@ public final class FreezeListener implements Listener {
         if (!freeze.isFrozen(event.getPlayer())) {
             return;
         }
-        // Looking around is allowed, changing block is not.
-        if (event.getFrom().getBlockX() != event.getTo().getBlockX()
-                || event.getFrom().getBlockY() != event.getTo().getBlockY()
-                || event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
-            event.setTo(event.getFrom());
+        // Looking around and falling are allowed; walking and jumping are not. Falling stays allowed so a
+        // player frozen in mid-air is not kicked for flying. Cancel instead of setTo(from): on 1.8 setTo is
+        // applied with a teleport, which onFrozenTeleport below would cancel too.
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        if (Math.abs(to.getX() - from.getX()) > 0.001 || Math.abs(to.getZ() - from.getZ()) > 0.001
+                || to.getY() > from.getY() + 0.001) {
+            event.setCancelled(true);
         }
     }
 

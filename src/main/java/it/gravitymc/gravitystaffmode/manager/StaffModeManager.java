@@ -4,9 +4,11 @@ import it.gravitymc.gravitystaffmode.Messages;
 import it.gravitymc.gravitystaffmode.data.PlayerStates;
 import it.gravitymc.gravitystaffmode.data.StaffInventoryStore;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -21,6 +23,9 @@ public final class StaffModeManager {
     private final StaffInventoryStore inventories;
     private final StaffTools tools;
     private final Random random = new Random();
+    // Who turned flight on with /fly or the feather. Tracked here because other plugins
+    // (e.g. a hub double jump) also grant allowFlight, which must not count as "flying".
+    private final Set<UUID> flightEnabled = new HashSet<UUID>();
 
     public StaffModeManager(JavaPlugin plugin, Messages messages, PlayerStates states, VanishManager vanish,
                             StaffInventoryStore inventories, StaffTools tools) {
@@ -75,13 +80,19 @@ public final class StaffModeManager {
     public void enable(Player player) {
         inventories.capture(player);
         player.setGameMode(staffGameMode());
+        flightEnabled.remove(player.getUniqueId());
         player.setFlying(false);
         player.setAllowFlight(false);
         tools.fill(player);
     }
 
     public void disable(Player player) {
+        flightEnabled.remove(player.getUniqueId());
         inventories.restore(player);
+    }
+
+    public void forget(UUID uuid) {
+        flightEnabled.remove(uuid);
     }
 
     /** Hands out the tools again, e.g. after a reload changed their names. */
@@ -113,7 +124,10 @@ public final class StaffModeManager {
     }
 
     public void toggleFlight(Player player) {
-        boolean enabled = !player.getAllowFlight();
+        boolean enabled = flightEnabled.add(player.getUniqueId());
+        if (!enabled) {
+            flightEnabled.remove(player.getUniqueId());
+        }
         if (enabled) {
             player.setAllowFlight(true);
             player.setFlying(true);
