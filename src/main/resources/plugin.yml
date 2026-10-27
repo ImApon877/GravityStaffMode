@@ -52,6 +52,9 @@ permissions:
   gravityvanish.fly:
     description: Permette di usare il volo durante la staff mode.
     default: op
+  gravityvanish.freeze.bypass:
+    description: Impedisce di essere freezati dallo staff.
+    default: op
   gravitystaffmode.reload:
     description: Permette di ricaricare GravityStaffMode senza riavviare il server.
     default: op

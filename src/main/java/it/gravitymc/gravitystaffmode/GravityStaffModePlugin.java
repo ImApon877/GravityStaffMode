@@ -20,6 +20,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -31,6 +32,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryCreativeEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -57,12 +59,13 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     private static final String RANDOMTP_PERMISSION = "gravityvanish.randomtp";
     private static final String FLY_PERMISSION = "gravityvanish.fly";
     private static final String RELOAD_PERMISSION = "gravitystaffmode.reload";
+    private static final String FREEZE_BYPASS_PERMISSION = "gravityvanish.freeze.bypass";
     private final Set<UUID> vanishedPlayers = new HashSet<UUID>();
     private final Set<UUID> staffModePlayers = new HashSet<UUID>();
     private final Set<UUID> vanishedBeforeStaffMode = new HashSet<UUID>();
     private final Set<UUID> frozenPlayers = new HashSet<UUID>();
     private final Set<Inventory> invseeMenus = new HashSet<Inventory>();
-    private final Set<Inventory> editableInvseeInventories = new HashSet<Inventory>();
+    private final Map<UUID, Inventory> openInvseeInventories = new HashMap<UUID, Inventory>();
     private final Map<UUID, String> originalTabNames = new HashMap<UUID, String>();
     private final Map<UUID, Boolean> flightBeforeStaffMode = new HashMap<UUID, Boolean>();
     private final Map<UUID, GameMode> gameModeBeforeStaffMode = new HashMap<UUID, GameMode>();
@@ -71,6 +74,8 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     private final Set<UUID> queuedTabUpdates = new HashSet<UUID>();
     private final Random random = new Random();
     private FileConfiguration messages;
+    private File staffInventoriesFile;
+    private YamlConfiguration savedStaffInventories;
     private boolean tabUpdateQueued;
     private boolean playerStateSaveQueued;
 
@@ -82,6 +87,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         saveResource("messages.yml", false);
         loadMessages();
         loadPlayerStates();
+        loadSavedStaffInventories();
         getServer().getPluginManager().registerEvents(this, this);
         for (Player player : Bukkit.getOnlinePlayers()) {
             updatePlayerState(player);
@@ -147,7 +153,22 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         disableStaffTools(player);
         originalTabNames.remove(player.getUniqueId());
         flightBeforeStaffMode.remove(player.getUniqueId());
-        frozenPlayers.remove(player.getUniqueId());
+        openInvseeInventories.remove(player.getUniqueId());
+        if (frozenPlayers.remove(player.getUniqueId())) {
+            handleFrozenQuit(player);
+        }
+    }
+
+    private void handleFrozenQuit(Player player) {
+        for (Player staff : Bukkit.getOnlinePlayers()) {
+            if (!staff.equals(player) && staff.hasPermission(STAFFMODE_PERMISSION)) {
+                sendMessage(staff, "giocatore-uscito-freezato", player.getName());
+            }
+        }
+        String command = getConfig().getString("freeze.comando-uscita", "");
+        if (command != null && !command.trim().isEmpty()) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.replace("{giocatore}", player.getName()));
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -254,7 +275,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     public void onInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
         boolean staffMode = isInStaffMode(player);
-        if (!staffMode && invseeMenus.isEmpty() && editableInvseeInventories.isEmpty()) {
+        if (!staffMode && invseeMenus.isEmpty() && openInvseeInventories.isEmpty()) {
             return;
         }
         Inventory topInventory = event.getView().getTopInventory();
@@ -265,8 +286,10 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             }
             return;
         }
-        if (editableInvseeInventories.contains(topInventory)) {
-            if (isStaffTool(event.getCurrentItem()) || isStaffTool(event.getCursor())) {
+        if (topInventory.equals(openInvseeInventories.get(player.getUniqueId()))) {
+            // In staff mode the staff inventory is wiped on exit, so anything taken from the target
+            // would be lost: invsee is read-only there.
+            if (staffMode || isStaffTool(event.getCurrentItem()) || isStaffTool(event.getCursor())) {
                 event.setCancelled(true);
             }
             return;
@@ -283,10 +306,23 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         }
     }
 
+    @EventHandler(ignoreCancelled = true)
+    public void onInventoryDrag(InventoryDragEvent event) {
+        Player player = (Player) event.getWhoClicked();
+        Inventory topInventory = event.getView().getTopInventory();
+        if (invseeMenus.contains(topInventory)
+                || (isInStaffMode(player) && topInventory.equals(openInvseeInventories.get(player.getUniqueId())))) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         invseeMenus.remove(event.getInventory());
-        editableInvseeInventories.remove(event.getInventory());
+        Inventory openInvsee = openInvseeInventories.get(event.getPlayer().getUniqueId());
+        if (event.getInventory().equals(openInvsee)) {
+            openInvseeInventories.remove(event.getPlayer().getUniqueId());
+        }
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -476,10 +512,21 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         if (!gameModeBeforeStaffMode.containsKey(uuid)) {
             gameModeBeforeStaffMode.put(uuid, player.getGameMode());
         }
-        player.setGameMode(GameMode.CREATIVE);
+        player.setGameMode(staffGameMode());
         player.setFlying(false);
         player.setAllowFlight(false);
         createStaffInventory(player);
+        saveStaffSnapshot(uuid);
+    }
+
+    private GameMode staffGameMode() {
+        String configured = getConfig().getString("gamemode-staffmode", "SURVIVAL");
+        try {
+            return GameMode.valueOf(configured.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            getLogger().warning("gamemode-staffmode non valida: " + configured + ", uso SURVIVAL.");
+            return GameMode.SURVIVAL;
+        }
     }
 
     private void disableStaffTools(Player player) {
@@ -532,6 +579,100 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
             player.getInventory().setContents(inventory);
             player.getInventory().setArmorContents(armor);
             player.updateInventory();
+        }
+        removeStaffSnapshot(uuid);
+    }
+
+    // The pre-staff-mode state is mirrored on disk so a crash (no onDisable) cannot lose the real inventory.
+    private void loadSavedStaffInventories() {
+        staffInventoriesFile = new File(getDataFolder(), "inventari-staffmode.yml");
+        savedStaffInventories = YamlConfiguration.loadConfiguration(staffInventoriesFile);
+        for (String key : savedStaffInventories.getKeys(false)) {
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(key);
+            } catch (IllegalArgumentException exception) {
+                getLogger().warning("UUID non valido in inventari-staffmode.yml: " + key);
+                continue;
+            }
+            inventoriesBeforeStaffMode.put(uuid, readItems(key + ".inventario",
+                    savedStaffInventories.getInt(key + ".dimensione-inventario", 36)));
+            armorBeforeStaffMode.put(uuid, readItems(key + ".armatura", 4));
+            String gameMode = savedStaffInventories.getString(key + ".gamemode");
+            if (gameMode != null) {
+                try {
+                    gameModeBeforeStaffMode.put(uuid, GameMode.valueOf(gameMode));
+                } catch (IllegalArgumentException ignored) {
+                    // Unknown game mode: the player simply keeps the current one.
+                }
+            }
+            if (savedStaffInventories.isBoolean(key + ".volo")) {
+                flightBeforeStaffMode.put(uuid, savedStaffInventories.getBoolean(key + ".volo"));
+            }
+        }
+    }
+
+    private void saveStaffSnapshot(UUID uuid) {
+        ItemStack[] inventory = inventoriesBeforeStaffMode.get(uuid);
+        ItemStack[] armor = armorBeforeStaffMode.get(uuid);
+        if (inventory == null || armor == null) {
+            return;
+        }
+        String key = uuid.toString();
+        savedStaffInventories.set(key, null);
+        savedStaffInventories.set(key + ".dimensione-inventario", inventory.length);
+        writeItems(key + ".inventario", inventory);
+        writeItems(key + ".armatura", armor);
+        GameMode gameMode = gameModeBeforeStaffMode.get(uuid);
+        if (gameMode != null) {
+            savedStaffInventories.set(key + ".gamemode", gameMode.name());
+        }
+        Boolean flight = flightBeforeStaffMode.get(uuid);
+        if (flight != null) {
+            savedStaffInventories.set(key + ".volo", flight);
+        }
+        saveStaffInventoriesFile();
+    }
+
+    private void removeStaffSnapshot(UUID uuid) {
+        if (savedStaffInventories != null && savedStaffInventories.contains(uuid.toString())) {
+            savedStaffInventories.set(uuid.toString(), null);
+            saveStaffInventoriesFile();
+        }
+    }
+
+    private void writeItems(String path, ItemStack[] items) {
+        for (int index = 0; index < items.length; index++) {
+            if (items[index] != null && items[index].getType() != Material.AIR) {
+                savedStaffInventories.set(path + "." + index, items[index]);
+            }
+        }
+    }
+
+    private ItemStack[] readItems(String path, int size) {
+        ItemStack[] items = new ItemStack[size];
+        ConfigurationSection section = savedStaffInventories.getConfigurationSection(path);
+        if (section == null) {
+            return items;
+        }
+        for (String key : section.getKeys(false)) {
+            try {
+                int index = Integer.parseInt(key);
+                if (index >= 0 && index < size) {
+                    items[index] = section.getItemStack(key);
+                }
+            } catch (NumberFormatException ignored) {
+                // Not a slot number: ignore the entry.
+            }
+        }
+        return items;
+    }
+
+    private void saveStaffInventoriesFile() {
+        try {
+            savedStaffInventories.save(staffInventoriesFile);
+        } catch (IOException exception) {
+            getLogger().severe("Impossibile salvare inventari-staffmode.yml: " + exception.getMessage());
         }
     }
 
@@ -610,9 +751,10 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
 
     private void openEditableInventory(Player viewer, Player target) {
         Inventory inventory = target.getInventory();
-        editableInvseeInventories.add(inventory);
+        // Register after opening: opening fires the close event of the previously open inventory.
         viewer.openInventory(inventory);
-        sendMessage(viewer, "inventario-aperto", target.getName());
+        openInvseeInventories.put(viewer.getUniqueId(), inventory);
+        sendMessage(viewer, isInStaffMode(viewer) ? "inventario-aperto-sola-lettura" : "inventario-aperto", target.getName());
     }
 
     private void toggleStaffVanish(Player player) {
@@ -635,7 +777,7 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     private void randomTeleport(Player player) {
         List<Player> targets = new ArrayList<Player>();
         for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            if (!onlinePlayer.equals(player)) {
+            if (!onlinePlayer.equals(player) && !isVanished(onlinePlayer)) {
                 targets.add(onlinePlayer);
             }
         }
@@ -652,6 +794,8 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
         if (frozenPlayers.remove(target.getUniqueId())) {
             sendMessage(staff, "giocatore-sfreezato", target.getName());
             sendMessage(target, "sei-sfreezato");
+        } else if (target.hasPermission(FREEZE_BYPASS_PERMISSION)) {
+            sendMessage(staff, "freeze-bypass", target.getName());
         } else {
             frozenPlayers.add(target.getUniqueId());
             sendMessage(staff, "giocatore-freezato", target.getName());
@@ -672,6 +816,10 @@ public final class GravityStaffModePlugin extends JavaPlugin implements Listener
     }
 
     private void updatePlayerState(Player player) {
+        if (!isInStaffMode(player) && inventoriesBeforeStaffMode.containsKey(player.getUniqueId())) {
+            // A snapshot left behind by a crash for a player no longer in staff mode: give the real inventory back.
+            disableStaffTools(player);
+        }
         if (isInStaffMode(player)) {
             enableStaffTools(player);
             if (isVanished(player)) {
