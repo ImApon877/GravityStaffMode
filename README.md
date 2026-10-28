@@ -4,6 +4,27 @@ Plugin Spigot per la gestione della staff mode e del vanish. Include strumenti p
 
 Compatibile con server Minecraft dalla 1.8 alla 1.21.11.
 
+## Download
+
+Scarica l'ultima versione dalla pagina [Releases](https://github.com/ImApon877/GravityStaffMode/releases/latest) (`GravityStaffMode.jar`).
+
+## Novita
+
+### 1.1.1
+- Permessi con nomi coerenti `gravitystaffmode.<nome>` (vedi sotto). I vecchi `gravityvanish.*` continuano a funzionare.
+
+### 1.1.0
+Versione provata con giocatori bot su Paper 1.8.8 e 1.21.11, compreso un crash del server (40/40 controlli superati su entrambe).
+
+- **Inventario dello staff salvato su disco**: se il server crasha con uno staffer in staff mode, l'inventario vero viene restituito.
+- **Freeze**: su 1.8 non bloccava niente e dalla 1.9 si attivava e disattivava con lo stesso click. Ora blocca camminata e salti (girare la testa e cadere restano permessi).
+- **Invsee in staff mode in sola lettura**: prima gli oggetti presi al giocatore sparivano; niente piu oggetti fantasma nel client.
+- **Rientro in staff mode**: gli strumenti tornano anche se un plugin hub svuota l'inventario all'ingresso.
+- **/fly** non si spegne piu da solo quando un altro plugin ha dato il permesso di volo.
+- **Freeze e uscita**: lo staff viene avvisato se un giocatore freezato esce, con comando opzionale (`freeze.comando-uscita`).
+- Gamemode della staff mode configurabile (default `SURVIVAL` invece di `CREATIVE`).
+- Dati dei giocatori in `dati.yml`; file `.yml` letti e scritti in UTF-8 con riparazione automatica dei caratteri rovinati su 1.8.
+
 ## Funzionalita
 
 - Vanish: nasconde lo staff ai giocatori senza permesso.
@@ -66,6 +87,19 @@ tab:
 
 `{prefisso}` conserva il nome nella tab impostato da altri plugin, ad esempio un plugin dei rank.
 
+Altre opzioni:
+
+```yml
+# Gamemode usata in staff mode (SURVIVAL, ADVENTURE, CREATIVE, SPECTATOR).
+gamemode-staffmode: SURVIVAL
+
+freeze:
+  # Comando eseguito dalla console se un giocatore freezato esce. {giocatore} = nome.
+  comando-uscita: 'ban {giocatore} Uscito durante il freeze'
+```
+
+Gli stati dei giocatori sono salvati in `dati.yml`, gli inventari dello staff in `inventari-staffmode.yml`: non vanno modificati a mano.
+
 ## Compilazione
 
 Richiede Java 8 e Maven.
@@ -75,3 +109,15 @@ mvn package
 ```
 
 Il file compilato viene creato in `target/GravityStaffMode.jar`.
+
+## Struttura progetto
+
+```text
+src/main/java/it/gravitymc/gravitystaffmode/
+├── GravityStaffModePlugin.java   avvio, reload, collegamenti
+├── Messages.java, Permissions.java, Compat.java, Utf8Yaml.java
+├── data/       PlayerStates (dati.yml), StaffInventoryStore (inventari-staffmode.yml)
+├── manager/    StaffModeManager, VanishManager, FreezeManager, InvseeManager, StaffTools
+├── command/    un comando per classe (VanishCommand, StaffModeCommand, ...)
+└── listener/   ConnectionListener, StaffModeListener, InventoryListener, FreezeListener
+```
